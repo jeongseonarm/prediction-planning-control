@@ -1,0 +1,17 @@
+Epoch139
+Vali MSE: tensor(0.2617, device='cuda:0') tensor(0.0765, device='cuda:0')
+Vali RMSE: tensor(0.5115, device='cuda:0') tensor(0.2765, device='cuda:0')
+Vali ADE: tensor(0.3512, device='cuda:0')
+Vali FDE: tensor(1.0524, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.99      0.98      0.98     96815
+           1       0.91      0.92      0.91      6075
+           2       0.89      0.92      0.91     10488
+           3       0.97      0.97      0.97      9502
+
+    accuracy                           0.97    122880
+   macro avg       0.94      0.95      0.94    122880
+weighted avg       0.97      0.97      0.97    122880
+

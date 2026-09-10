@@ -1,0 +1,307 @@
+Trainable params: 552362
+Epoch0
+Vali MSE: tensor(5.7263, device='cuda:0') tensor(0.9328, device='cuda:0')
+Vali RMSE: tensor(2.3930, device='cuda:0') tensor(0.9658, device='cuda:0')
+Vali ADE: tensor(2.0601, device='cuda:0')
+Vali FDE: tensor(3.7755, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.94      0.93      0.94     96830
+           1       0.83      0.70      0.76      6088
+           2       0.68      0.78      0.73     10475
+           3       0.66      0.71      0.69      9487
+
+    accuracy                           0.89    122880
+   macro avg       0.78      0.78      0.78    122880
+weighted avg       0.89      0.89      0.89    122880
+
+Epoch1
+Vali MSE: tensor(2.5869, device='cuda:0') tensor(0.4946, device='cuda:0')
+Vali RMSE: tensor(1.6084, device='cuda:0') tensor(0.7032, device='cuda:0')
+Vali ADE: tensor(1.3662, device='cuda:0')
+Vali FDE: tensor(2.6043, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.96      0.95      0.96     96810
+           1       0.85      0.84      0.85      6087
+           2       0.77      0.82      0.80     10489
+           3       0.79      0.79      0.79      9494
+
+    accuracy                           0.92    122880
+   macro avg       0.84      0.85      0.85    122880
+weighted avg       0.92      0.92      0.92    122880
+
+Epoch2
+Vali MSE: tensor(1.5830, device='cuda:0') tensor(0.3642, device='cuda:0')
+Vali RMSE: tensor(1.2582, device='cuda:0') tensor(0.6035, device='cuda:0')
+Vali ADE: tensor(1.0789, device='cuda:0')
+Vali FDE: tensor(2.1428, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.97      0.95      0.96     96867
+           1       0.87      0.89      0.88      6069
+           2       0.78      0.87      0.82     10471
+           3       0.81      0.90      0.85      9473
+
+    accuracy                           0.94    122880
+   macro avg       0.86      0.90      0.88    122880
+weighted avg       0.94      0.94      0.94    122880
+
+Epoch3
+Vali MSE: tensor(1.1861, device='cuda:0') tensor(0.2668, device='cuda:0')
+Vali RMSE: tensor(1.0891, device='cuda:0') tensor(0.5166, device='cuda:0')
+Vali ADE: tensor(0.9226, device='cuda:0')
+Vali FDE: tensor(1.8326, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.96      0.97     96846
+           1       0.89      0.89      0.89      6063
+           2       0.81      0.88      0.84     10462
+           3       0.83      0.94      0.88      9509
+
+    accuracy                           0.95    122880
+   macro avg       0.88      0.92      0.89    122880
+weighted avg       0.95      0.95      0.95    122880
+
+Epoch4
+Vali MSE: tensor(0.8805, device='cuda:0') tensor(0.2270, device='cuda:0')
+Vali RMSE: tensor(0.9384, device='cuda:0') tensor(0.4765, device='cuda:0')
+Vali ADE: tensor(0.7838, device='cuda:0')
+Vali FDE: tensor(1.6852, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.96      0.97     96813
+           1       0.85      0.93      0.89      6069
+           2       0.84      0.89      0.86     10488
+           3       0.82      0.95      0.88      9510
+
+    accuracy                           0.95    122880
+   macro avg       0.87      0.93      0.90    122880
+weighted avg       0.95      0.95      0.95    122880
+
+Epoch5
+Vali MSE: tensor(0.7284, device='cuda:0') tensor(0.2261, device='cuda:0')
+Vali RMSE: tensor(0.8535, device='cuda:0') tensor(0.4755, device='cuda:0')
+Vali ADE: tensor(0.7346, device='cuda:0')
+Vali FDE: tensor(1.5894, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.96      0.97     96831
+           1       0.87      0.92      0.90      6082
+           2       0.83      0.90      0.86     10481
+           3       0.85      0.95      0.90      9486
+
+    accuracy                           0.95    122880
+   macro avg       0.88      0.93      0.91    122880
+weighted avg       0.95      0.95      0.95    122880
+
+Epoch6
+Vali MSE: tensor(0.6536, device='cuda:0') tensor(0.1869, device='cuda:0')
+Vali RMSE: tensor(0.8085, device='cuda:0') tensor(0.4323, device='cuda:0')
+Vali ADE: tensor(0.6692, device='cuda:0')
+Vali FDE: tensor(1.5281, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.97      0.97     96824
+           1       0.90      0.90      0.90      6085
+           2       0.84      0.90      0.87     10469
+           3       0.88      0.92      0.90      9502
+
+    accuracy                           0.95    122880
+   macro avg       0.90      0.92      0.91    122880
+weighted avg       0.95      0.95      0.95    122880
+
+Epoch8
+Vali MSE: tensor(0.5632, device='cuda:0') tensor(0.1576, device='cuda:0')
+Vali RMSE: tensor(0.7505, device='cuda:0') tensor(0.3970, device='cuda:0')
+Vali ADE: tensor(0.6096, device='cuda:0')
+Vali FDE: tensor(1.4530, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.98      0.98     96837
+           1       0.90      0.92      0.91      6066
+           2       0.87      0.87      0.87     10480
+           3       0.92      0.94      0.93      9497
+
+    accuracy                           0.96    122880
+   macro avg       0.92      0.92      0.92    122880
+weighted avg       0.96      0.96      0.96    122880
+
+Epoch9
+Vali MSE: tensor(0.5480, device='cuda:0') tensor(0.1547, device='cuda:0')
+Vali RMSE: tensor(0.7402, device='cuda:0') tensor(0.3933, device='cuda:0')
+Vali ADE: tensor(0.6066, device='cuda:0')
+Vali FDE: tensor(1.4146, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.97      0.98     96850
+           1       0.89      0.91      0.90      6077
+           2       0.85      0.92      0.88     10461
+           3       0.92      0.94      0.93      9492
+
+    accuracy                           0.96    122880
+   macro avg       0.91      0.93      0.92    122880
+weighted avg       0.96      0.96      0.96    122880
+
+Epoch11
+Vali MSE: tensor(0.5304, device='cuda:0') tensor(0.1325, device='cuda:0')
+Vali RMSE: tensor(0.7283, device='cuda:0') tensor(0.3641, device='cuda:0')
+Vali ADE: tensor(0.6024, device='cuda:0')
+Vali FDE: tensor(1.3527, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.97      0.98     96825
+           1       0.90      0.93      0.91      6085
+           2       0.86      0.88      0.87     10470
+           3       0.92      0.96      0.94      9500
+
+    accuracy                           0.96    122880
+   macro avg       0.91      0.93      0.92    122880
+weighted avg       0.96      0.96      0.96    122880
+
+Epoch12
+Vali MSE: tensor(0.4572, device='cuda:0') tensor(0.1262, device='cuda:0')
+Vali RMSE: tensor(0.6761, device='cuda:0') tensor(0.3552, device='cuda:0')
+Vali ADE: tensor(0.5351, device='cuda:0')
+Vali FDE: tensor(1.3293, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.98      0.98     96805
+           1       0.91      0.91      0.91      6076
+           2       0.88      0.90      0.89     10477
+           3       0.93      0.95      0.94      9522
+
+    accuracy                           0.96    122880
+   macro avg       0.92      0.93      0.93    122880
+weighted avg       0.96      0.96      0.96    122880
+
+Epoch14
+Vali MSE: tensor(0.4342, device='cuda:0') tensor(0.1114, device='cuda:0')
+Vali RMSE: tensor(0.6589, device='cuda:0') tensor(0.3337, device='cuda:0')
+Vali ADE: tensor(0.5159, device='cuda:0')
+Vali FDE: tensor(1.2977, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.99      0.97      0.98     96814
+           1       0.91      0.92      0.92      6071
+           2       0.85      0.93      0.89     10490
+           3       0.92      0.96      0.94      9505
+
+    accuracy                           0.97    122880
+   macro avg       0.92      0.95      0.93    122880
+weighted avg       0.97      0.97      0.97    122880
+
+Epoch16
+Vali MSE: tensor(0.3862, device='cuda:0') tensor(0.1093, device='cuda:0')
+Vali RMSE: tensor(0.6214, device='cuda:0') tensor(0.3307, device='cuda:0')
+Vali ADE: tensor(0.4828, device='cuda:0')
+Vali FDE: tensor(1.2485, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.97      0.98     96837
+           1       0.92      0.91      0.91      6078
+           2       0.86      0.90      0.88     10475
+           3       0.91      0.97      0.94      9490
+
+    accuracy                           0.96    122880
+   macro avg       0.92      0.94      0.93    122880
+weighted avg       0.96      0.96      0.96    122880
+
+Epoch17
+Vali MSE: tensor(0.3715, device='cuda:0') tensor(0.1044, device='cuda:0')
+Vali RMSE: tensor(0.6095, device='cuda:0') tensor(0.3232, device='cuda:0')
+Vali ADE: tensor(0.4680, device='cuda:0')
+Vali FDE: tensor(1.2260, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.98      0.98     96832
+           1       0.89      0.91      0.90      6081
+           2       0.86      0.88      0.87     10459
+           3       0.94      0.95      0.95      9508
+
+    accuracy                           0.96    122880
+   macro avg       0.92      0.93      0.92    122880
+weighted avg       0.96      0.96      0.96    122880
+
+Epoch21
+Vali MSE: tensor(0.3689, device='cuda:0') tensor(0.0925, device='cuda:0')
+Vali RMSE: tensor(0.6073, device='cuda:0') tensor(0.3042, device='cuda:0')
+Vali ADE: tensor(0.4725, device='cuda:0')
+Vali FDE: tensor(1.1827, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.98      0.98     96802
+           1       0.90      0.94      0.92      6079
+           2       0.90      0.89      0.90     10498
+           3       0.94      0.96      0.95      9501
+
+    accuracy                           0.97    122880
+   macro avg       0.93      0.94      0.94    122880
+weighted avg       0.97      0.97      0.97    122880
+
+Epoch22
+Vali MSE: tensor(0.3082, device='cuda:0') tensor(0.0907, device='cuda:0')
+Vali RMSE: tensor(0.5552, device='cuda:0') tensor(0.3011, device='cuda:0')
+Vali ADE: tensor(0.4136, device='cuda:0')
+Vali FDE: tensor(1.1465, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.98      0.98     96781
+           1       0.93      0.89      0.91      6091
+           2       0.88      0.90      0.89     10489
+           3       0.95      0.96      0.95      9519
+
+    accuracy                           0.97    122880
+   macro avg       0.93      0.93      0.93    122880
+weighted avg       0.97      0.97      0.97    122880
+
+Epoch27
+Vali MSE: tensor(0.2820, device='cuda:0') tensor(0.0807, device='cuda:0')
+Vali RMSE: tensor(0.5310, device='cuda:0') tensor(0.2841, device='cuda:0')
+Vali ADE: tensor(0.3846, device='cuda:0')
+Vali FDE: tensor(1.1055, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.98      0.98     96813
+           1       0.87      0.94      0.90      6086
+           2       0.89      0.88      0.89     10491
+           3       0.93      0.96      0.95      9490
+
+    accuracy                           0.96    122880
+   macro avg       0.92      0.94      0.93    122880
+weighted avg       0.97      0.96      0.97    122880
+
+Epoch30
+Vali MSE: tensor(0.2709, device='cuda:0') tensor(0.0802, device='cuda:0')
+Vali RMSE: tensor(0.5205, device='cuda:0') tensor(0.2831, device='cuda:0')
+Vali ADE: tensor(0.3817, device='cuda:0')
+Vali FDE: tensor(1.0868, device='cuda:0')
+Vali report:
+              precision    recall  f1-score   support
+
+           0       0.98      0.98      0.98     96806
+           1       0.93      0.90      0.91      6078
+           2       0.87      0.94      0.90     10485
+           3       0.96      0.95      0.95      9511
+
+    accuracy                           0.97    122880
+   macro avg       0.94      0.94      0.94    122880
+weighted avg       0.97      0.97      0.97    122880
+

@@ -1,0 +1,16 @@
+{
+    "Epochs": 300,
+    "Max_len": 5000,
+    "Feature_len": 7,
+    "TF_dim": 32,
+    "Num_heads": 2,
+    "Device": "cuda:0",
+    "FFN_dim": 2048,
+    "Num_enc_only": 1,
+    "Num_enc": 2,
+    "Num_dec": 1,
+    "Maneuver_num": 4,
+    "Type": "TEST",
+    "Input_horizon": 25,
+    "Prediction_horizon": 75
+}

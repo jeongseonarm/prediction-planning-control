@@ -1,0 +1,25 @@
+{
+    "Input_horizon": 25,
+    "Rolling_horizon": 1,
+    "Prediction_horizon": 75,
+    "Input_feature": [
+        "xCenter",
+        "yCenter",
+        "heading",
+        "xVelocity",
+        "yVelocity",
+        "xAcceleration",
+        "yAcceleration"
+    ],
+    "Output_feature": [
+        "xCenter",
+        "yCenter",
+        "Maneuver"
+    ],
+    "Device": "cuda:0",
+    "Batch_size": 2048,
+    "Shuffle": true,
+    "Train_extract": false,
+    "Vali_extract": false,
+    "Site": "B"
+}
