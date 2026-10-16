@@ -1,48 +1,54 @@
 # Prediction-Planning-Control
 
-Python implementation of an autonomous driving pipeline on the **inD dataset**: trajectory prediction, global path planning, Frenet-frame local planning, and vehicle control, integrated into a single simulation with animated visualization.
+Python implementation of an autonomous driving pipeline on the **inD dataset**, integrating trajectory prediction, global path planning, Frenet-frame local planning, and vehicle control into a single simulation with animated visualization.
 
----
+## Overview
 
-## What is this?
+This project integrates the following components into an autonomous driving pipeline:
 
-This repository combines four components of a self-driving stack into one runnable simulation:
-
-- **Trajectory prediction** of surrounding vehicles (Dual Transformer)
-- **Global path planning** for the ego vehicle (Hybrid A*)
-- **Local planning** in the Frenet frame
-- **Vehicle control** using LTV-MPC / Pure Pursuit
-
----
+- **Trajectory Prediction:** Predicts future vehicle trajectories using a Dual Transformer model.
+- **Global Path Planning:** Generates a global path using Hybrid A*.
+- **Local Planning:** Generates a local trajectory in the Frenet frame, considering predicted vehicle trajectories and planning both the path and speed profile.
+- **Vehicle Control:** Tracks the planned trajectory using Linear Time-Varying Model Predictive Control (LTV-MPC) or Pure Pursuit.
+- **Visualization:** Displays the integrated pipeline and vehicle motion in an animated simulation.
 
 ## Pipeline
 
 ```mermaid
-flowchart LR
-    A["Drivable Mask +\nCollision Checker"] --> B["Global Path Planning\n(Hybrid A*)"]
-    B --> C["Speed Profile"]
-    C --> L["Local Planning\n(Frenet Frame)"]
-    L --> D["Vehicle Control\n(LTV-MPC / Pure Pursuit)"]
-    E["inD Track Data"] --> F["Trajectory Prediction\n(Dual Transformer)"]
-    F --> L
-    D --> G["Visualization"]
+flowchart TD
+    A[Drivable Mask + Collision Checker] --> B[Global Path Planning<br/>Hybrid A*]
+    B --> C[Local Planning<br/>Frenet Frame]
+    D[inD Track Data] --> E[Trajectory Prediction<br/>Dual Transformer]
+    E --> C
+    C --> F[Vehicle Control<br/>LTV-MPC / Pure Pursuit]
+    E --> G[Visualization]
     F --> G
 ```
 
+## Components
+
 | Stage | Method |
 |---|---|
-| Global path planning | Hybrid A* over a drivable-area mask |
-| Speed profile | Target-speed profile along the planned path |
-| Local planning | Frenet-frame trajectory generation with predicted-obstacle avoidance |
-| Control | LTV-MPC (default), Pure Pursuit as an alternative |
-| Trajectory prediction | Dual Transformer, evaluated against ground truth |
-| Visualization | matplotlib animation |
-
----
+| Trajectory Prediction | Dual Transformer |
+| Global Path Planning | Hybrid A* |
+| Local Planning | Frenet-frame trajectory generation with path and speed planning |
+| Vehicle Control | LTV-MPC / Pure Pursuit |
+| Vehicle Model | Kinematic Bicycle Model |
+| Visualization | Matplotlib animation |
 
 ## Getting Started
 
 ### Requirements
+
+- Python
+- PyTorch 1.13.1 (CPU)
+- NumPy
+- Pandas
+- OpenCV
+- Matplotlib
+- tqdm
+
+### Installation
 
 ```bash
 git clone https://github.com/jeongseonarm/prediction-planning-control.git
@@ -50,92 +56,86 @@ cd prediction-planning-control
 pip install -r requirements.txt
 ```
 
-Key dependencies: PyTorch 1.13.1 (CPU), NumPy, Pandas, OpenCV, matplotlib, tqdm.
+## Data Preparation
 
-### Data Preparation
+Prepare the required datasets and model files before running the simulation.
 
-Required data (see path constants at the top of `main.py`):
-
-| Path | Contents |
+| Directory | Description |
 |---|---|
-| `trajectory_prediction/Data/` | inD track CSV + scene background image |
-| `map/drivable_mask_images/` | drivable-area mask image for the scene |
-| `trajectory_prediction/log/` | prediction model config (`.json`) and trained weights (`.pt`) |
+| `trajectory_prediction/Data/` | inD track data (CSV) and scene background images |
+| `map/drivable_mask_images/` | Drivable-area mask images |
+| `trajectory_prediction/log/` | Prediction model configuration (`.json`) and trained weights (`.pt`) |
 
-Pretrained weights and the inD dataset are **not included** in this repo and must be obtained separately.
+**Note:** The inD dataset and trained model weights are not included in this repository and must be obtained separately.
 
-### Run
+## Run
+
+Run the integrated simulation:
 
 ```bash
 python main.py
 ```
 
-### Key Parameters (`main.py`)
+### Key Parameters
+
+The following parameters in `main.py` can be adjusted to configure the simulation:
 
 | Parameter | Description |
 |---|---|
-| `DATA_NUM` | inD scene/recording number to load |
-| `EGO_START`, `EGO_GOAL` | ego vehicle start/goal state `[x, y, theta]` |
-| `TARGET_SPEED` | target cruising speed |
+| `DATA_NUM` | Selects the dataset or scene |
+| `EGO_START` | Initial ego-vehicle position and heading |
+| `EGO_GOAL` | Global planning goal |
+| `TARGET_SPEED` | Target speed used by the planning and control setup |
 | `MPC_HORIZON` | LTV-MPC prediction horizon |
-| `INPUT_FRAME`, `OUTPUT_FRAME` | input/output frame length for trajectory prediction |
-| `PREDICTION_START_FRAME`, `PREDICTION_END_FRAME` | frame range simulated |
-
----
+| `INPUT_FRAME` | Number of observed frames for trajectory prediction |
+| `OUTPUT_FRAME` | Number of future frames predicted by the model |
+| `PREDICTION_START_FRAME` | Start frame for the prediction and simulation interval |
+| `PREDICTION_END_FRAME` | End frame for the prediction and simulation interval |
 
 ## Project Structure
 
 ```text
 prediction-planning-control/
 ├── trajectory_prediction/
-│   ├── Data/                    # inD track CSVs, background images
-│   ├── log/                     # training configs (json) and model weights (.pt)
+│   ├── Data/
+│   ├── log/
 │   ├── Models/
-│   │   └── Dual_transformer.py  # trajectory prediction model
+│   │   └── Dual_transformer.py
 │   └── Utils/
 │       ├── Average_deviation.py
-│       ├── Base.py              # config loading, scale un-normalization
+│       ├── Base.py
 │       ├── Draw_trajectory.py
 │       ├── Draw_vehicle.py
 │       └── Make_tensor.py
 ├── planning/
 │   ├── global_path_planning/
-│   │   ├── hybrid_a_star.py     # Hybrid A* global planner
-│   │   └── collision_checker.py # mask-based collision checking
-│   └── local_planning/          # Frenet-frame local planner
+│   │   ├── hybrid_a_star.py
+│   │   └── collision_checker.py
+│   └── local_planning/
+│       └── ...
 ├── control/
 │   ├── controllers/
-│   │   ├── ltv_mpc.py           # Linear Time-Varying MPC
-│   │   └── pure_pursuit.py      # Pure Pursuit controller
+│   │   ├── ltv_mpc.py
+│   │   └── pure_pursuit.py
 │   └── models/
-│       └── kinematic_bicycle.py # vehicle kinematics model
+│       └── kinematic_bicycle.py
 ├── map/
-│   └── drivable_mask_images/    # drivable-area mask images
-├── main.py                      # pipeline entry point
+│   └── drivable_mask_images/
+├── main.py
 ├── requirements.txt
 └── .gitignore
 ```
 
----
-
 ## Results
 
-### Quantitative
+### Simulation
 
-<!--
-| Metric | Value |
-|---|---|
-| Average Deviation (ADE) | TBD |
--->
+<!-- Add a simulation GIF or video here. -->
 
-### Qualitative
+### Trajectory Prediction
 
-<!--
-![Demo](docs/demo.gif)
--->
-
----
+<!-- Add quantitative evaluation results, such as ADE and FDE, here. -->
 
 ## License
 
-TBD — no license has been chosen yet. Without one, default copyright rules apply (others cannot legally reuse/redistribute the code). Add a `LICENSE` file (e.g. MIT, Apache-2.0) once you decide.
+No license has been specified yet.
