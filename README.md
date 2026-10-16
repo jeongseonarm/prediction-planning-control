@@ -15,14 +15,27 @@ This project integrates the following components into an autonomous driving pipe
 ## Pipeline
 
 ```mermaid
-flowchart TD
-    A[Drivable Mask + Collision Checker] --> B[Global Path Planning<br/>Hybrid A*]
-    B --> C[Local Planning<br/>Frenet Frame]
-    D[inD Track Data] --> E[Trajectory Prediction<br/>Dual Transformer]
+flowchart LR
+    A["Drivable Mask + Collision Checker"] --> B["Global Path Planning<br/>Hybrid A*"]
+    B --> C["Local Planning<br/>Frenet Frame<br/>Path + Speed Planning"]
+
+    D["inD Track Data"] --> E["Trajectory Prediction<br/>Dual Transformer"]
     E --> C
-    C --> F[Vehicle Control<br/>LTV-MPC / Pure Pursuit]
-    E --> G[Visualization]
+
+    C --> F["Vehicle Control<br/>LTV-MPC / Pure Pursuit"]
+
+    E --> G["Visualization"]
     F --> G
+
+    classDef planning fill:#e8f0fe,stroke:#4285f4,color:#202124
+    classDef prediction fill:#e6f4ea,stroke:#34a853,color:#202124
+    classDef control fill:#fce8e6,stroke:#ea4335,color:#202124
+    classDef visualization fill:#fef7e0,stroke:#f9ab00,color:#202124
+
+    class A,B,C planning
+    class D,E prediction
+    class F control
+    class G visualization
 ```
 
 ## Components
