@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# inD dataset and trained weights are not redistributed (see README)
+trajectory_prediction/Data/
+trajectory_prediction/log/pt/
+*.pt
+*.pth
+
+# Local outputs
+*.gif
+*.mp4
+planner_dump.pkl
+_unused/
+!docs/demo.gif
