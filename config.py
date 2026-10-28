@@ -35,7 +35,7 @@ class ScenarioConfig:
 
     # ---- control ------------------------------------------------------
     dt: float = 0.04                        # simulation / MPC step [s]
-    mpc_horizon: int = 10                   # steps
+    mpc_horizon: int = 25                   # steps
     controller: str = "ltv"                 # "ltv" (OSQP) or "nmpc" (SLSQP, reference)
 
     # ---- global path (Hybrid A*) ---------------------------------------
