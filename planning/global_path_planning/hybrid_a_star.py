@@ -1,4 +1,5 @@
 import heapq
+import math
 import numpy as np
 
 
@@ -43,10 +44,10 @@ def calc_index(state, map_bounds, xy_res, yaw_res, yaw_bins):
 
 
 def heuristic(state, goal):
+    """Euclidean lower bound; vehicle feasibility is handled by motion primitives."""
     dx = state[0] - goal[0]
     dy = state[1] - goal[1]
-    dyaw = abs((state[2] - goal[2] + np.pi) % (2 * np.pi) - np.pi)
-    return np.hypot(dx, dy) + dyaw * 1.5
+    return np.hypot(dx, dy)
 
 
 def hybrid_a_star(
@@ -60,6 +61,8 @@ def hybrid_a_star(
     xy_res: float = 1.0,
     yaw_res: float = np.deg2rad(15.0),
     steer_samples: int = 5,
+    motion_resolution: float = 0.1,
+    steer_change_weight: float = 0.1,
 ):
     """
     Args:
@@ -69,16 +72,27 @@ def hybrid_a_star(
         is_collision_fn: callback fn(x, y, yaw) -> bool, True on collision
         wheelbase: vehicle wheelbase (m)
         max_steer: maximum steering angle (rad)
-        step_size: travelled distance per expansion (m), must be >= sqrt(2) * xy_res
+        step_size: travelled distance per expansion (m)
         xy_res: position grid resolution (m)
         yaw_res: heading grid resolution (rad)
         steer_samples: number of steering branches
+        motion_resolution: maximum distance between motion/collision samples (m)
+        steer_change_weight: cost weight for steering change (cost/rad)
     """
-    x_min, x_max, y_min, y_max = map_bounds
-    yaw_bins = int(np.round(2 * np.pi / yaw_res))
+    if wheelbase <= 0.0:
+        raise ValueError("wheelbase must be positive")
+    if step_size <= 0.0 or motion_resolution <= 0.0:
+        raise ValueError("step_size and motion_resolution must be positive")
+    if xy_res <= 0.0 or yaw_res <= 0.0:
+        raise ValueError("xy_res and yaw_res must be positive")
+    if steer_samples < 2:
+        raise ValueError("steer_samples must be at least 2")
 
-    start_state = np.array(start[:3])
-    goal_state = np.array(goal[:3])
+    x_min, x_max, y_min, y_max = map_bounds
+    yaw_bins = max(1, int(np.round(2 * np.pi / yaw_res)))
+
+    start_state = np.array(start[:3], dtype=float)
+    goal_state = np.array(goal[:3], dtype=float)
 
     start_state[2] = (start_state[2] + np.pi) % (2 * np.pi) - np.pi
     goal_state[2] = (goal_state[2] + np.pi) % (2 * np.pi) - np.pi
@@ -95,59 +109,77 @@ def hybrid_a_star(
     open_set = {start_node.key: start_node}
     closed_set = set()
     queue = []
-    heapq.heappush(queue, (start_node.f_cost, start_node.key))
+    heapq.heappush(queue, (start_node.f_cost, start_node.g_cost, start_node.key))
 
     steer_inputs = np.linspace(-max_steer, max_steer, steer_samples)
     goal_node = None
 
     while queue:
-        _, curr_key = heapq.heappop(queue)
-        curr_node = open_set[curr_key]
+        _, queued_g_cost, curr_key = heapq.heappop(queue)
+        curr_node = open_set.get(curr_key)
 
+        # Ignore obsolete heap entries left behind after a cheaper route was found.
+        if curr_node is None or queued_g_cost > curr_node.g_cost + 1e-12:
+            continue
         if curr_key in closed_set:
             continue
         closed_set.add(curr_key)
 
-        # Goal Check
         dist = np.hypot(
             curr_node.state[0] - goal_state[0],
             curr_node.state[1] - goal_state[1],
         )
-
-        yaw_err = abs((curr_node.state[2] - goal_state[2] + np.pi) % (2 * np.pi) - np.pi)
+        yaw_err = abs(
+            (curr_node.state[2] - goal_state[2] + np.pi) % (2 * np.pi) - np.pi
+        )
 
         if dist < (xy_res * 1.2) and yaw_err < (yaw_res * 1.2):
             goal_node = curr_node
             break
 
-        # Node Expansion
+        # Integrate each steering primitive in short increments. Check the
+        # map bounds and vehicle collision at every intermediate pose.
+        num_steps = int(math.ceil(step_size / motion_resolution))
+        ds = step_size / num_steps
+
         for steer in steer_inputs:
             x, y, yaw = curr_node.state
-            new_x = x + step_size * np.cos(yaw)
-            new_y = y + step_size * np.sin(yaw)
-            new_yaw = yaw + (step_size / wheelbase) * np.tan(steer)
-            new_yaw = (new_yaw + np.pi) % (2 * np.pi) - np.pi
+            collision = False
 
-            new_state = np.array([new_x, new_y, new_yaw])
+            for _ in range(num_steps):
+                x += ds * np.cos(yaw)
+                y += ds * np.sin(yaw)
+                yaw += (ds / wheelbase) * np.tan(steer)
+                yaw = (yaw + np.pi) % (2 * np.pi) - np.pi
 
-            # 1. Bounds Check
-            if not (x_min <= new_x <= x_max and y_min <= new_y <= y_max):
+                if not (x_min <= x <= x_max and y_min <= y <= y_max):
+                    collision = True
+                    break
+                if is_collision_fn(x, y, yaw):
+                    collision = True
+                    break
+
+            if collision:
                 continue
 
-            # 2. Collision Check 
-            if is_collision_fn(new_x, new_y, new_yaw):
-                continue
-
-            n_idx = calc_index(
-                new_state, map_bounds, xy_res, yaw_res, yaw_bins
-            )
+            new_state = np.array([x, y, yaw])
+            n_idx = calc_index(new_state, map_bounds, xy_res, yaw_res, yaw_bins)
             n_key = n_idx
 
             if n_key in closed_set:
                 continue
 
-            steer_penalty = abs(steer) * 0.1
-            g_cost = curr_node.g_cost + step_size + steer_penalty
+            distance_cost = step_size
+            steering_cost = abs(steer) * 0.1
+            steering_change_cost = (
+                abs(steer - curr_node.steer) * steer_change_weight
+            )
+            g_cost = (
+                curr_node.g_cost
+                + distance_cost
+                + steering_cost
+                + steering_change_cost
+            )
             f_cost = g_cost + heuristic(new_state, goal_state)
 
             if n_key not in open_set or g_cost < open_set[n_key].g_cost:
@@ -160,7 +192,7 @@ def hybrid_a_star(
                     steer=steer,
                 )
                 open_set[n_key] = node
-                heapq.heappush(queue, (f_cost, n_key))
+                heapq.heappush(queue, (f_cost, g_cost, n_key))
 
     if goal_node is None:
         return None, np.inf
@@ -174,3 +206,4 @@ def hybrid_a_star(
 
     path.reverse()
     return path, goal_node.g_cost
+
