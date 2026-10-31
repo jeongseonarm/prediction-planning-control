@@ -10,14 +10,15 @@ Prediction -> planning -> control pipeline on the inD dataset.
 import argparse
 import dataclasses
 
-from config import ScenarioConfig
-from simulation.runner import run_simulation
-from simulation.world import build_world
-
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     parser.add_argument("--controller", choices=("ltv", "nmpc"))
+    parser.add_argument(
+        "--execution-mode",
+        choices=("multirate", "sequential"),
+        help="runtime scheduling mode (default: config value, multirate)",
+    )
     parser.add_argument("--start-frame", type=int)
     parser.add_argument("--end-frame", type=int)
     parser.add_argument("--no-viz", action="store_true", help="skip the animation")
@@ -29,9 +30,12 @@ def parse_args(argv=None):
 
 def main(argv=None):
     args = parse_args(argv)
+    from config import ScenarioConfig
+    from simulation.world import build_world
 
     overrides = {
         "controller": args.controller,
+        "execution_mode": args.execution_mode,
         "start_frame": args.start_frame,
         "end_frame": args.end_frame,
     }
@@ -53,7 +57,30 @@ def main(argv=None):
         frame_dt=cfg.frame_dt,
     )
 
-    result = run_simulation(cfg, world, predictor, keep_tracks=visualize)
+    if cfg.execution_mode == "multirate":
+        import asyncio
+        from simulation.async_runner import run_multirate_simulation
+
+        result = asyncio.run(
+            run_multirate_simulation(
+                cfg, world, predictor, keep_tracks=visualize
+            )
+        )
+    else:
+        from simulation.runner import run_simulation
+
+        result = run_simulation(cfg, world, predictor, keep_tracks=visualize)
+
+    if result.runtime_diagnostics:
+        print("Runtime worker diagnostics:")
+        for name, values in result.runtime_diagnostics.items():
+            print(
+                f"  {name}: calls={values['calls']}, "
+                f"deadline_misses={values['deadline_misses']}, "
+                f"discarded={values['discarded_results']}, "
+                f"errors={values['errors']}, "
+                f"max_compute_ms={values['max_compute_ms']:.1f}"
+            )
 
     if visualize:
         from simulation.visualization import animate
@@ -66,3 +93,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
+

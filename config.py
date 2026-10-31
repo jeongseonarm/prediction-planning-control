@@ -33,8 +33,19 @@ class ScenarioConfig:
     goal_position_tolerance: float = 1.0    # [m]
     goal_yaw_tolerance: float = float(np.deg2rad(10.0))
 
+    # ---- runtime timing ----------------------------------------------
+    # `dt` remains the MPC/control sampling interval for compatibility.
+    dt: float = 0.04                        # controller period [s]
+    simulation_period: float = 0.04         # vehicle model update period [s]
+    prediction_period: float = 0.04         # independent prediction worker [s] (25 Hz)
+    planner_period: float = 0.10            # independent local-planner worker [s]
+    max_prediction_age: float = 0.25        # discard older traffic predictions [s]
+    max_plan_age: float = 0.25              # reject an old local plan [s]
+    max_control_age: float = 0.12           # stale command triggers braking [s]
+    emergency_brake_decel: float = 3.0      # stale-data fallback [m/s^2]
+    execution_mode: str = "multirate"       # "multirate" or legacy "sequential"
+
     # ---- control ------------------------------------------------------
-    dt: float = 0.04                        # simulation / MPC step [s]
     mpc_horizon: int = 25                   # steps
     controller: str = "ltv"                 # "ltv" (OSQP) or "nmpc" (SLSQP, reference)
 
@@ -67,6 +78,22 @@ class ScenarioConfig:
     target_speed_step: float = 1.0
     n_speed_samples: int = 5
 
+    def __post_init__(self):
+        for name in (
+            "dt", "simulation_period", "frame_dt", "prediction_period", "planner_period",
+            "max_prediction_age", "max_plan_age", "max_control_age",
+        ):
+            value = getattr(self, name)
+            if not np.isfinite(value) or value <= 0:
+                raise ValueError(f"{name} must be finite and positive.")
+        if self.execution_mode not in ("multirate", "sequential"):
+            raise ValueError("execution_mode must be 'multirate' or 'sequential'.")
+        if (
+            not np.isfinite(self.emergency_brake_decel)
+            or self.emergency_brake_decel <= 0
+        ):
+            raise ValueError("emergency_brake_decel must be finite and positive.")
+
     # ---- derived paths --------------------------------------------------
     @property
     def data_path(self):
@@ -92,6 +119,8 @@ class ScenarioConfig:
     def planner_config(self):
         return PlannerConfig(
             wheelbase=self.wheelbase,
+            prediction_dt=self.frame_dt,
+            prediction_t0=self.frame_dt,
             ego_length=self.ego_length,
             ego_width=self.ego_width,
             target_speed=self.target_speed_kmh / 3.6,
@@ -104,3 +133,4 @@ class ScenarioConfig:
             # the MPC only needs mpc_horizon * dt seconds of reference
             min_reuse_points=int(np.ceil(self.mpc_horizon * self.dt / 0.1)) + 1,
         )
+

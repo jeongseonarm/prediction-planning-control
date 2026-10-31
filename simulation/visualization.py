@@ -44,10 +44,10 @@ def animate(cfg, world, result, fps=None, show=True, save_path=None, loop=False)
     ground truth / predicted paths, the global path, the ego vehicle and the
     planned (green) trajectory.
 
-    fps defaults to real time (1 / cfg.dt). A saved GIF plays once unless
+    fps defaults to the replay rate (1 / cfg.frame_dt). A saved GIF plays once unless
     loop=True.
     """
-    fps = fps or 1.0 / cfg.dt
+    fps = fps or 1.0 / cfg.frame_dt
     if not result.tracks:
         raise ValueError("The result has no tracks; run with keep_tracks=True.")
 
@@ -131,3 +131,4 @@ def animate(cfg, world, result, fps=None, show=True, save_path=None, loop=False)
         plt.show()
 
     return animation
+
