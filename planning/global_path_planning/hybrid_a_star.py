@@ -15,6 +15,7 @@ class Node:
         f_cost: float,
         parent_key=None,
         steer: float = 0.0,
+        steer_idx: int = -1,
     ):
         self.x_idx = x_idx
         self.y_idx = y_idx
@@ -24,10 +25,11 @@ class Node:
         self.f_cost = f_cost
         self.parent_key = parent_key
         self.steer = steer
+        self.steer_idx = steer_idx
 
     @property
     def key(self):
-        return (self.x_idx, self.y_idx, self.yaw_idx)
+        return (self.x_idx, self.y_idx, self.yaw_idx, self.steer_idx)
 
 
 def calc_index(state, map_bounds, xy_res, yaw_res, yaw_bins):
@@ -87,6 +89,8 @@ def hybrid_a_star(
         raise ValueError("xy_res and yaw_res must be positive")
     if steer_samples < 2:
         raise ValueError("steer_samples must be at least 2")
+    if steer_change_weight < 0.0:
+        raise ValueError("steer_change_weight must be non-negative")
 
     x_min, x_max, y_min, y_max = map_bounds
     yaw_bins = max(1, int(np.round(2 * np.pi / yaw_res)))
@@ -104,6 +108,7 @@ def hybrid_a_star(
         state=start_state,
         g_cost=0.0,
         f_cost=heuristic(start_state, goal_state),
+        steer_idx=-1,  # no incoming steering command at the initial state
     )
 
     open_set = {start_node.key: start_node}
@@ -142,7 +147,7 @@ def hybrid_a_star(
         num_steps = int(math.ceil(step_size / motion_resolution))
         ds = step_size / num_steps
 
-        for steer in steer_inputs:
+        for steer_idx, steer in enumerate(steer_inputs):
             x, y, yaw = curr_node.state
             collision = False
 
@@ -164,7 +169,9 @@ def hybrid_a_star(
 
             new_state = np.array([x, y, yaw])
             n_idx = calc_index(new_state, map_bounds, xy_res, yaw_res, yaw_bins)
-            n_key = n_idx
+            # Steering history affects the next transition cost, so it is
+            # part of the discretized search state as well.
+            n_key = (*n_idx, steer_idx)
 
             if n_key in closed_set:
                 continue
@@ -190,6 +197,7 @@ def hybrid_a_star(
                     f_cost=f_cost,
                     parent_key=curr_key,
                     steer=steer,
+                    steer_idx=steer_idx,
                 )
                 open_set[n_key] = node
                 heapq.heappush(queue, (f_cost, g_cost, n_key))
