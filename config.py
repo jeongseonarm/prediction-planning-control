@@ -41,10 +41,12 @@ class ScenarioConfig:
     # ---- global path (Hybrid A*) ---------------------------------------
     map_margin: float = 0.1                 # collision-checker body margin [m]
     max_steer_deg: float = 30.0
-    astar_step_size: float = 0.75           # must be >= sqrt(2) * astar_xy_res
+    astar_step_size: float = 0.75           # distance travelled per expansion [m]
+    astar_motion_resolution: float = 0.1    # integration / collision-check spacing [m]
     astar_xy_res: float = 0.5
     astar_yaw_res_deg: float = 10.0
     astar_steer_samples: int = 15
+    astar_steer_change_weight: float = 0.1  # cost weight per radian of steer change
 
     # ---- prediction ---------------------------------------------------
     input_frame: int = 25
