@@ -6,14 +6,14 @@ Python implementation of an autonomous driving pipeline on the **inD dataset**: 
 
 ## What is this?
 
-This repository combines four components of a self-driving stack into one runnable simulation:
+This repository combines four components of a self-driving stack into one runnable simulation. The default runtime schedules prediction, local planning, and control independently and exchanges timestamped latest values; the planning, prediction, and MPC algorithms themselves are unchanged.
 
 - **Trajectory prediction** of surrounding vehicles (Dual Transformer)
 - **Global path planning** for the ego vehicle (Hybrid A*)
 - **Local planning** in the Frenet frame, with collision checks against the predicted vehicles
 - **Vehicle control** using LTV-MPC (OSQP) on a kinematic bicycle model
 
-Every frame the ego vehicle predicts the traffic around it, plans a short collision-free trajectory, and tracks it with the MPC. The ego state is then advanced with the vehicle model and the loop repeats.
+The inD tracks are replayed as a sensor feed. The vehicle model and predictor run at 25 Hz by default; local planning runs at 10 Hz and the MPC at 25 Hz. The predictor's input and output samples remain spaced at the dataset interval (0.04 s); its execution period is configured separately. A worker uses the newest available input and does not accumulate a queue of old frames. Prediction paths are shifted to the planner state's timestamp, and the controller advances a reused plan to the current time. Results older than configured limits are discarded; the plant applies a braking command if its control input is stale. This is a soft-real-time asynchronous replay simulation, not a hard real-time system or hardware sensor/actuator interface.
 
 ---
 
@@ -74,6 +74,7 @@ python main.py                      # simulate and show the animation
 python main.py --no-viz             # headless
 python main.py --save result.gif    # write the animation instead of showing it (real-time speed, plays once)
 python main.py --controller nmpc    # SLSQP reference controller instead of LTV-MPC
+python main.py --execution-mode sequential  # legacy predict -> plan -> control loop
 python main.py --save result.gif --fps 12   # slower playback
 python main.py --save result.gif --loop     # GIF repeats forever (default: plays once)
 python main.py --start-frame 300 --end-frame 400
@@ -88,7 +89,11 @@ python main.py --start-frame 300 --end-frame 400
 | `initial_speed`, `target_speed_kmh`, `max_speed_kmh` | initial, cruising and maximum speed |
 | `max_accel`, `safety_margin` | planner acceleration limit, clearance between vehicle footprints |
 | `lateral_offsets` | lateral offsets sampled by the local planner (d < 0: own lane, d > 0: oncoming lane) |
-| `controller`, `mpc_horizon`, `dt` | `"ltv"` or `"nmpc"`, MPC horizon in steps, control step in seconds |
+| `controller`, `mpc_horizon`, `dt` | `"ltv"` or `"nmpc"`, MPC horizon in steps, MPC/control period in seconds |
+| `execution_mode` | `multirate` (default, independent periodic workers) or `sequential` (legacy loop) |
+| `simulation_period` | vehicle-model integration period; the newest command is held between updates |
+| `prediction_period`, `planner_period` | independent prediction and local-planner periods |
+| `max_prediction_age`, `max_plan_age`, `max_control_age` | freshness limits; stale commands trigger braking |
 | `input_frame`, `output_frame` | input/output frame length for trajectory prediction |
 | `start_frame`, `end_frame` | frame range simulated |
 
@@ -103,6 +108,7 @@ prediction-planning-control/
 ├── simulation/
 │   ├── world.py                     # mask, collision checker, global path
 │   ├── runner.py                    # closed loop: predict -> plan -> control -> step
+│   ├── async_runner.py               # independent latest-value periodic workers
 │   └── visualization.py             # animation
 ├── trajectory_prediction/
 │   ├── predictor.py                 # per-frame prediction interface
@@ -192,3 +198,4 @@ reference = resample_reference(traj, 0.04, 11)        # rows x, y, yaw, v for th
 ## License
 
 MIT, see [`LICENSE`](LICENSE). The Frenet-frame code is based on [PythonRobotics](https://github.com/AtsushiSakai/PythonRobotics) (MIT) and Werling et al., *Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame* (2010); see [`NOTICE.md`](NOTICE.md). The inD dataset has its own terms and is not part of this repository.
+

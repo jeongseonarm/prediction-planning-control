@@ -77,14 +77,17 @@ class _CostOrdered:
 _ARRAY_KEYS = ("t", "x", "y", "yaw", "kappa", "v", "a", "steer")
 
 
-def resample_reference(traj, dt, n_points, keys=("x", "y", "yaw", "v")):
+def resample_reference(
+    traj, dt, n_points, keys=("x", "y", "yaw", "v"), start_time=0.0
+):
     """
-    Sample a planned trajectory at t = 0, dt, 2*dt, ... for a controller whose
+    Sample a planned trajectory at start_time + k * dt for a controller whose
     time step is dt (e.g. MPC: n_points = horizon + 1). Past the end of the
-    trajectory the last value is held.
+    trajectory the last value is held. start_time lets an asynchronous consumer
+    continue following a plan after its creation time.
     Returns an (n_points, len(keys)) array.
     """
-    t = np.arange(n_points) * dt
+    t = start_time + np.arange(n_points) * dt
     return np.column_stack([np.interp(t, traj["t"], traj[k]) for k in keys])
 
 
@@ -826,3 +829,4 @@ class FrenetLocalPlanner:
         else:
             self._age += 1
         return traj
+

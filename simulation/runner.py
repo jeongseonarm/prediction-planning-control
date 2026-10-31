@@ -19,6 +19,7 @@ class SimulationResult:
     planned_xy: list = field(default_factory=list)      # per frame: (n, 2) planned path
     planner_status: list = field(default_factory=list)  # per frame: "ok", "stop", ...
     goal_reached: bool = False
+    runtime_diagnostics: dict = field(default_factory=dict)
 
 
 def build_controller(cfg, vehicle, a_limit):
@@ -133,3 +134,4 @@ def run_simulation(cfg, world, predictor, keep_tracks=True, progress=True):
 
     result.ego_states = np.asarray(ego_states)
     return result
+
