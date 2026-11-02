@@ -24,12 +24,12 @@ class ScenarioConfig:
     mask_dir: str = os.path.join(ROOT_DIR, "map", "drivable_mask_images")
 
     # ---- ego vehicle --------------------------------------------------
-    ego_start: tuple = (80.0, -25.0, float(np.deg2rad(-168.69)))   # x, y, yaw
-    ego_goal: tuple = (20.0, -37.0, float(np.deg2rad(-168.69)))
+    ego_start: tuple = (90.0, -21.0, np.deg2rad(-168.69))
+    ego_goal: tuple = (44.0, -16.0, np.deg2rad(140.0))
     initial_speed: float = 5.0              # [m/s]
-    ego_length: float = 2.5
+    ego_length: float = 4.5
     ego_width: float = 1.8
-    wheelbase: float = 2.0
+    wheelbase: float = 2.7
     goal_position_tolerance: float = 1.0    # [m]
     goal_yaw_tolerance: float = float(np.deg2rad(10.0))
 
@@ -50,24 +50,24 @@ class ScenarioConfig:
     controller: str = "ltv"                 # "ltv" (OSQP) or "nmpc" (SLSQP, reference)
 
     # ---- global path (Hybrid A*) ---------------------------------------
-    map_margin: float = 0.1                 # collision-checker body margin [m]
+    map_margin: float = 0.2                 # collision-checker body margin [m]
     max_steer_deg: float = 30.0
-    astar_step_size: float = 0.75           # distance travelled per expansion [m]
-    astar_motion_resolution: float = 0.1    # integration / collision-check spacing [m]
-    astar_xy_res: float = 0.5
-    astar_yaw_res_deg: float = 10.0
-    astar_steer_samples: int = 15
+    astar_step_size: float = 1.5          # >= sqrt(2) * astar_xy_res for grid progress [m]
+    astar_motion_resolution: float = 0.15   # integration / collision-check spacing [m]
+    astar_xy_res: float = 1.0
+    astar_yaw_res_deg: float = 15.0
+    astar_steer_samples: int = 7
     astar_steer_change_weight: float = 0.1  # cost weight per radian of steer change
 
     # ---- prediction ---------------------------------------------------
     input_frame: int = 25
     output_frame: int = 75
     frame_dt: float = 0.04                  # time between two dataset frames [s]
-    start_frame: int = 300
-    end_frame: int = 500
+    start_frame: int = 400
+    end_frame: int = 750
 
     # ---- local planner ------------------------------------------------
-    target_speed_kmh: float = 10.0
+    target_speed_kmh: float = 25.0
     max_speed_kmh: float = 30.0
     max_accel: float = 3.0
     safety_margin: float = 0.3
@@ -98,17 +98,23 @@ class ScenarioConfig:
     @property
     def data_path(self):
         return os.path.join(
-            self.prediction_dir, "Data", "18_tracks_del_vru_static_maneuver.csv"
+            self.prediction_dir,
+            "data",
+            f"{self.data_num:02d}_tracks_del_vru_static_maneuver.csv",
         )
 
     @property
     def log_dir(self):
-        return os.path.join(self.prediction_dir, "log")
+        return os.path.join(self.prediction_dir, "configs")
+
+    @property
+    def checkpoint_dir(self):
+        return os.path.join(self.prediction_dir, "checkpoints")
 
     @property
     def background_path(self):
         return os.path.join(
-            self.prediction_dir, "Data", "inD_backgroud_images",
+            self.prediction_dir, "data", "inD_backgroud_images",
             f"{self.data_num:02d}_background.png",
         )
 

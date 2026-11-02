@@ -79,6 +79,8 @@ def build_world(cfg, with_background=True):
         steer_samples=cfg.astar_steer_samples,
         motion_resolution=cfg.astar_motion_resolution,
         steer_change_weight=cfg.astar_steer_change_weight,
+        goal_position_tolerance=cfg.goal_position_tolerance,
+        goal_yaw_tolerance=cfg.goal_yaw_tolerance,
     )
 
     if global_path is None:

@@ -52,6 +52,7 @@ def main(argv=None):
     predictor = TrajectoryPredictor(
         data_path=cfg.data_path,
         log_dir=cfg.log_dir,
+        checkpoint_dir=cfg.checkpoint_dir,
         input_frame=cfg.input_frame,
         output_frame=cfg.output_frame,
         frame_dt=cfg.frame_dt,

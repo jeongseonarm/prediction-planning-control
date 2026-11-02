@@ -10,7 +10,7 @@ import os
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 IMAGE_PATH = os.path.join(
-    HERE, "..", "trajectory_prediction", "Data", "inD_backgroud_images", "18_background.png"
+    HERE, "..", "trajectory_prediction", "data", "inD_backgroud_images", "18_background.png"
 )
 MASK_PATH = os.path.join(HERE, "drivable_mask_images", "18_mask.png")
 

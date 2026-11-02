@@ -10,9 +10,12 @@ venv/
 .idea/
 .DS_Store
 
-# inD dataset and trained weights are not redistributed (see README)
-trajectory_prediction/Data/
-trajectory_prediction/log/pt/
+# Local-only inD dataset, checkpoint weights, and training output (see README)
+trajectory_prediction/data/**
+!trajectory_prediction/data/README.md
+trajectory_prediction/checkpoints/**
+!trajectory_prediction/checkpoints/README.md
+trajectory_prediction/logs/training/
 *.pt
 *.pth
 
@@ -21,4 +24,3 @@ trajectory_prediction/log/pt/
 *.mp4
 planner_dump.pkl
 _unused/
-!docs/demo.gif

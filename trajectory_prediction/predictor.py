@@ -23,10 +23,9 @@ import numpy as np
 import pandas as pd
 import torch
 
-from . import _HERE  # noqa: F401  (puts Models/ and Utils/ on sys.path)
-from Models.Dual_transformer import Dual_transformer
-from Utils.Base import Read_config, reverse_standard_scale
-from Utils.Make_tensor import Make_tensor
+from .models.dual_transformer import Dual_transformer
+from .preprocessing.scaling import Read_config, reverse_standard_scale
+from .preprocessing.make_tensor import Make_tensor
 
 _FEATURES = [
     "xCenter", "yCenter", "heading", "xVelocity", "yVelocity",
@@ -80,6 +79,7 @@ class TrajectoryPredictor:
         output_frame=75,
         frame_dt=0.04,
         device="cpu",
+        checkpoint_dir=None,
     ):
         self.input_frame = input_frame
         self.output_frame = output_frame
@@ -110,7 +110,7 @@ class TrajectoryPredictor:
         self.device = torch.device(device)
         self.model = Dual_transformer(self.config).to(self.device)
 
-        weight_dir = os.path.join(log_dir, "pt")
+        weight_dir = checkpoint_dir or os.path.join(log_dir, "..", "checkpoints")
         weight_files = glob.glob(os.path.join(weight_dir, "*.pt"))
 
         if len(weight_files) == 0:

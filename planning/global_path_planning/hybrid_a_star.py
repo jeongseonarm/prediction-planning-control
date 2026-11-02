@@ -65,6 +65,8 @@ def hybrid_a_star(
     steer_samples: int = 5,
     motion_resolution: float = 0.1,
     steer_change_weight: float = 0.1,
+    goal_position_tolerance: float = None,
+    goal_yaw_tolerance: float = None,
 ):
     """
     Args:
@@ -80,6 +82,10 @@ def hybrid_a_star(
         steer_samples: number of steering branches
         motion_resolution: maximum distance between motion/collision samples (m)
         steer_change_weight: cost weight for steering change (cost/rad)
+        goal_position_tolerance: accepted goal position error (m); defaults to
+                                 1.2 * xy_res when omitted
+        goal_yaw_tolerance: accepted goal heading error (rad); defaults to
+                            1.2 * yaw_res when omitted
     """
     if wheelbase <= 0.0:
         raise ValueError("wheelbase must be positive")
@@ -91,6 +97,17 @@ def hybrid_a_star(
         raise ValueError("steer_samples must be at least 2")
     if steer_change_weight < 0.0:
         raise ValueError("steer_change_weight must be non-negative")
+    if goal_position_tolerance is not None and goal_position_tolerance <= 0.0:
+        raise ValueError("goal_position_tolerance must be positive")
+    if goal_yaw_tolerance is not None and goal_yaw_tolerance <= 0.0:
+        raise ValueError("goal_yaw_tolerance must be positive")
+
+    goal_position_tolerance = (
+        1.2 * xy_res if goal_position_tolerance is None else goal_position_tolerance
+    )
+    goal_yaw_tolerance = (
+        1.2 * yaw_res if goal_yaw_tolerance is None else goal_yaw_tolerance
+    )
 
     x_min, x_max, y_min, y_max = map_bounds
     yaw_bins = max(1, int(np.round(2 * np.pi / yaw_res)))
@@ -138,7 +155,7 @@ def hybrid_a_star(
             (curr_node.state[2] - goal_state[2] + np.pi) % (2 * np.pi) - np.pi
         )
 
-        if dist < (xy_res * 1.2) and yaw_err < (yaw_res * 1.2):
+        if dist <= goal_position_tolerance and yaw_err <= goal_yaw_tolerance:
             goal_node = curr_node
             break
 

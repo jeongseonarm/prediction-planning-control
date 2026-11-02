@@ -7,9 +7,11 @@ The Frenet-frame parts of `planning/local_path_planning/` are based on
 
 | File | Origin |
 |---|---|
-| `cartesian_frenet_converter.py` | PythonRobotics `CartesianFrenetConverter` (Wang Zheng), **unchanged** |
-| `frenet_trajectory_generator.py` | candidate generation after PythonRobotics' Frenet optimal trajectory (Atsushi Sakai), extended (modes, batch generation) |
-| `frenet_vectorized.py` | the converter's Frenet-to-Cartesian formulas, vectorized |
+| `cartesian_frenet_converter.py` | PythonRobotics `CartesianFrenetConverter` (Wang Zheng), unchanged |
+| `frenet_trajectory_generator.py` | PythonRobotics Frenet optimal trajectory candidate generation (Atsushi Sakai), extended with additional modes and batched generation |
+| `frenet_vectorized.py` | Vectorized version of the Frenet-to-Cartesian formulas |
+
+The applicable MIT license notice is reproduced below:
 
 ```
 MIT License
@@ -35,15 +37,32 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## Reference
+## Research reference
 
-M. Werling, J. Ziegler, S. Kammel, S. Thrun, "Optimal Trajectory Generation for
-Dynamic Street Scenarios in a Frenet Frame", ICRA 2010.
+M. Werling, J. Ziegler, S. Kammel, and S. Thrun, “Optimal Trajectory Generation
+for Dynamic Street Scenarios in a Frenet Frame,” IEEE International Conference
+on Robotics and Automation, 2010.
 
-## Data
+## inD dataset
 
-The [inD dataset](https://www.ind-dataset.com) (ika, RWTH Aachen University) is
-not part of this repository. It is free for non-commercial use after
-registration; its terms apply to the data, the background images and models
-trained on them. `map/drivable_mask_images/18_mask.png` is a hand-drawn binary
-mask for recording 18 and contains no dataset pixels.
+The [inD dataset](https://levelxdata.com/ind-dataset/) by ika, RWTH Aachen
+University, is not included in this repository. Access and use are governed by
+the dataset's separate terms. The official terms allow non-commercial research
+use after access approval, require attribution, and prohibit distribution of
+the dataset or modified versions. They permit qualifying abstract derivatives
+only when they do not contain inD data or allow its recovery; distribution and
+use remain non-commercial.
+
+A model trained on inD may qualify as a derivative, but its distribution still
+has to meet those conditions. Background images and recorded tracks are inD
+data. The official terms permit only small portions of data for illustration
+in qualifying research publications. Check the terms before publishing a GIF or
+other output containing inD imagery or track data, and cite the dataset paper:
+
+J. Bock et al., “The inD Dataset: A Drone Dataset of Naturalistic Road User
+Trajectories at German Intersections,” IEEE Intelligent Vehicles Symposium,
+2020, pp. 1929–1934, [doi:10.1109/IV47402.2020.9304839](https://doi.org/10.1109/IV47402.2020.9304839).
+
+`map/drivable_mask_images/18_mask.png` is a hand-drawn binary drivable-area
+annotation for recording 18 and contains no background-image pixels. The inD
+terms still apply to dataset-derived material; refer to the official terms.
