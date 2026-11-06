@@ -35,21 +35,20 @@ _VERIFY_TRACKS = 20  # tracks compared against Make_tensor before it is trusted
 
 
 def constant_velocity_prediction(track_data, steps, frame_dt):
-    """Fallback prediction for tracks the network cannot predict (short history)."""
-    xy = track_data[["xCenter", "yCenter"]].to_numpy()
+    """Fallback prediction for tracks the network cannot predict (short history).
 
-    if len(xy) == 0:
+    Constant velocity from the latest frame's measured velocity.
+    """
+    if len(track_data) == 0:
         return None
 
-    if len(xy) >= 2:
-        n = min(len(xy) - 1, 5)
-        velocity = (xy[-1] - xy[-1 - n]) / (n * frame_dt)
-    else:
-        velocity = np.zeros(2)
+    last = track_data.iloc[-1]
+    xy = np.array([last["xCenter"], last["yCenter"]], dtype=float)
+    velocity = np.array([last["xVelocity"], last["yVelocity"]], dtype=float)
 
     t = np.arange(1, steps + 1) * frame_dt
-    return xy[-1] + velocity[None, :] * t[:, None]
-
+    return xy[None, :] + velocity[None, :] * t[:, None]
+ 
 
 def vehicle_heading(track_data):
     """Current heading of a track in radians (same convention as the ego yaw)."""
@@ -229,3 +228,4 @@ class TrajectoryPredictor:
             )
 
         return result
+

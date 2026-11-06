@@ -24,3 +24,15 @@ trajectory_prediction/logs/training/
 *.mp4
 planner_dump.pkl
 _unused/
+# Secrets and local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local logs and scratch notes
+*.log
+/가상환경 활성화.txt
+/시행착오.txt
+
