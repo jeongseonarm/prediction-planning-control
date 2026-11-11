@@ -71,7 +71,65 @@ def _brake_control(cfg, ego_state):
     return np.array([-min(cfg.emergency_brake_decel, cfg.max_accel), steer])
 
 
+class _ConcurrencyTracker:
+    """Records how many other worker threads computed during each call.
+
+    Used to test whether slow calls coincide with the other modules running
+    (CPU / GIL contention). The event loop thread itself is not counted.
+    """
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._peak_others = {}
+
+    def enter(self, key):
+        with self._lock:
+            self._peak_others[key] = 0
+            others = len(self._peak_others) - 1
+            for k in self._peak_others:
+                self._peak_others[k] = max(self._peak_others[k], others)
+
+    def leave(self, key):
+        with self._lock:
+            return self._peak_others.pop(key)
+
+
+def _timed(fn, tracker):
+    """Wrap ``fn`` so that it also returns its run time [ms] and overlap.
+
+    The time is taken inside the worker thread, so it excludes the hand-off to
+    the thread and the delay until the event loop resumes the coroutine. Time
+    spent waiting for the GIL while ``fn`` runs is still included. ``overlap``
+    is the largest number of other worker threads computing during the call.
+    """
+
+    def wrapper(*args, **kwargs):
+        key = threading.get_ident()
+        tracker.enter(key)
+        started = time.perf_counter()
+        try:
+            out = fn(*args, **kwargs)
+        finally:
+            elapsed = (time.perf_counter() - started) * 1000.0
+            overlap = tracker.leave(key)
+        return out, elapsed, overlap
+
+    return wrapper
+
+
+def _count(items):
+    try:
+        return len(items)
+    except TypeError:
+        return None
+
+
 def _make_metrics():
+    # latency_ms: wall-clock time of one worker callback that did real work
+    #             (thread hand-off, GIL waits and event-loop delay included)
+    # compute_ms: run time of the algorithm call itself, measured in its thread
+    # details:    per call (compute_ms, input size, overlap) to explain slow calls
+    #             input size = tracks (prediction) / predicted vehicles (planner)
     return {
         name: {
             "calls": 0,
@@ -79,12 +137,123 @@ def _make_metrics():
             "stale_input_skips": 0,
             "discarded_results": 0,
             "deadline_misses": 0,
-            "last_compute_ms": None,
-            "max_compute_ms": 0.0,
+            "last_latency_ms": None,
+            "max_latency_ms": 0.0,
+            "latency_ms": [],
+            "compute_ms": [],
+            "details": [],
             "last_error": None,
         }
         for name in ("prediction", "planner", "controller")
     }
+
+
+def summarize_samples(samples, warmup=1):
+    """Statistics of timing samples [ms] without the first ``warmup`` ones.
+
+    The first call carries one-time costs (lazy initialisation, cold caches),
+    so it is reported separately instead of being mixed into the statistics.
+    """
+    first = samples[0] if len(samples) else None
+    rest = np.asarray(samples[warmup:], dtype=float)
+    summary = {"n": int(rest.size), "first": first}
+    if rest.size:
+        summary.update(
+            mean=float(rest.mean()),
+            p50=float(np.percentile(rest, 50)),
+            p95=float(np.percentile(rest, 95)),
+            p99=float(np.percentile(rest, 99)),
+            max=float(rest.max()),
+        )
+    return summary
+
+
+def format_diagnostics(metrics, warmup=1):
+    """Text lines of the per-worker diagnostics printed after a run."""
+    lines = ["Runtime worker diagnostics:"]
+    for name, values in metrics.items():
+        lines.append(
+            f"  {name}: calls={values['calls']}, "
+            f"deadline_misses={values['deadline_misses']}, "
+            f"discarded={values['discarded_results']}, "
+            f"errors={values['errors']}, "
+            f"stale_input_skips={values['stale_input_skips']}, "
+            f"max_latency_ms={values['max_latency_ms']:.1f}"
+        )
+        for label, key in (("latency", "latency_ms"), ("compute", "compute_ms")):
+            stats = summarize_samples(values[key], warmup)
+            if not stats["n"]:
+                continue
+            lines.append(
+                f"    {label}_ms (n={stats['n']}, first call excluded): "
+                f"mean={stats['mean']:.1f}, p50={stats['p50']:.1f}, "
+                f"p95={stats['p95']:.1f}, p99={stats['p99']:.1f}, "
+                f"max={stats['max']:.1f}; first={stats['first']:.1f}"
+            )
+        if values["last_error"]:
+            lines.append(f"    last_error: {values['last_error']}")
+    lines.extend(format_tail_diagnostics(metrics, warmup))
+    return lines
+
+
+def format_tail_diagnostics(metrics, warmup=1, top=5):
+    """Lines that relate slow calls to input size and to worker overlap.
+
+    items   = tracks (prediction) or predicted vehicles (planner)
+    overlap = largest number of other workers computing during the call
+    """
+    labels = {"prediction": "tracks", "planner": "vehicles"}
+    lines = ["Slow-call breakdown (compute_ms, first call excluded):"]
+    for name, values in metrics.items():
+        rows = values["details"][warmup:]
+        if not rows:
+            continue
+        times = np.asarray([row[0] for row in rows], dtype=float)
+        items = [row[1] for row in rows]
+        overlap = np.asarray([row[2] for row in rows], dtype=int)
+        has_items = all(item is not None for item in items)
+        label = labels.get(name, "items")
+        lines.append(f"  {name}: n={times.size}")
+
+        if has_items:
+            sizes = np.asarray(items, dtype=int)
+            head = f"    by {label}:"
+            if len(set(items)) > 1:
+                from scipy.stats import spearmanr
+
+                rho = float(spearmanr(sizes, times)[0])
+                head += f" spearman(compute, {label})={rho:.2f}"
+            lines.append(head)
+            for size in sorted(set(items)):
+                mask = sizes == size
+                sel = times[mask]
+                # same input size, split by overlap: separates the two causes
+                split = ", ".join(
+                    f"ov{level}: p50={np.percentile(times[mask & (overlap == level)], 50):.1f}"
+                    f" (n={int((mask & (overlap == level)).sum())})"
+                    for level in sorted(set(overlap[mask].tolist()))
+                )
+                lines.append(
+                    f"      {label}={size}: n={sel.size}, "
+                    f"p50={np.percentile(sel, 50):.1f}, max={sel.max():.1f}; {split}"
+                )
+
+        lines.append("    by overlap (other workers computing at the same time):")
+        for level in sorted(set(overlap.tolist())):
+            sel = times[overlap == level]
+            p95 = f"{np.percentile(sel, 95):.1f}" if sel.size >= 20 else "-"
+            lines.append(
+                f"      overlap={level}: n={sel.size}, "
+                f"p50={np.percentile(sel, 50):.1f}, p95={p95}, max={sel.max():.1f}"
+            )
+
+        slowest = np.argsort(times)[::-1][:top]
+        parts = []
+        for i in slowest:
+            extra = f"{label}={items[i]}, " if has_items else ""
+            parts.append(f"{times[i]:.0f} ms ({extra}overlap={overlap[i]})")
+        lines.append("    slowest: " + "; ".join(parts))
+    return lines
 
 
 async def run_multirate_simulation(
@@ -126,6 +295,7 @@ async def run_multirate_simulation(
     result = SimulationResult()
     ego_history = []
     metrics = _make_metrics()
+    tracker = _ConcurrencyTracker()
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     wall_origin = loop.time()
@@ -146,6 +316,7 @@ async def run_multirate_simulation(
             await wait_until(deadline)
             if stop.is_set():
                 break
+            calls_before = metrics[name]["calls"]
             started = time.perf_counter()
             try:
                 await callback()
@@ -155,10 +326,12 @@ async def run_multirate_simulation(
                 metrics[name]["errors"] += 1
                 metrics[name]["last_error"] = f"{type(exc).__name__}: {exc}"
             elapsed = (time.perf_counter() - started) * 1000.0
-            metrics[name]["last_compute_ms"] = elapsed
-            metrics[name]["max_compute_ms"] = max(
-                metrics[name]["max_compute_ms"], elapsed
+            metrics[name]["last_latency_ms"] = elapsed
+            metrics[name]["max_latency_ms"] = max(
+                metrics[name]["max_latency_ms"], elapsed
             )
+            if metrics[name]["calls"] > calls_before:  # skipped cycles are not samples
+                metrics[name]["latency_ms"].append(elapsed)
             deadline += period
             now = loop.time()
             if deadline <= now:
@@ -175,7 +348,13 @@ async def run_multirate_simulation(
             return
         last_prediction_input_sequence = sequence
         metrics["prediction"]["calls"] += 1
-        tracks = await asyncio.to_thread(predictor.predict, frame)
+        tracks, compute_ms, overlap = await asyncio.to_thread(
+            _timed(predictor.predict, tracker), frame
+        )
+        metrics["prediction"]["compute_ms"].append(compute_ms)
+        metrics["prediction"]["details"].append(
+            (compute_ms, _count(tracks), overlap)
+        )
         current_time, _, _ = state.clock.read()
         if current_time - frame_time > cfg.max_prediction_age:
             metrics["prediction"]["discarded_results"] += 1
@@ -199,8 +378,12 @@ async def run_multirate_simulation(
         )
         predictions, sizes, headings = _plan_inputs(aligned_tracks)
         metrics["planner"]["calls"] += 1
-        planned = await asyncio.to_thread(
-            planner.plan, ego.copy(), predictions, sizes, headings
+        planned, compute_ms, overlap = await asyncio.to_thread(
+            _timed(planner.plan, tracker), ego.copy(), predictions, sizes, headings
+        )
+        metrics["planner"]["compute_ms"].append(compute_ms)
+        metrics["planner"]["details"].append(
+            (compute_ms, _count(predictions), overlap)
         )
         current_time, _, _ = state.clock.read()
         if current_time - ego_time > cfg.max_plan_age:
@@ -238,9 +421,11 @@ async def run_multirate_simulation(
             start_time=elapsed,
         )
         metrics["controller"]["calls"] += 1
-        control = await asyncio.to_thread(
-            controller.compute_control, ego[:4].copy(), reference
+        control, compute_ms, overlap = await asyncio.to_thread(
+            _timed(controller.compute_control, tracker), ego[:4].copy(), reference
         )
+        metrics["controller"]["compute_ms"].append(compute_ms)
+        metrics["controller"]["details"].append((compute_ms, None, overlap))
 
         current_time, _, _ = state.clock.read()
         if (

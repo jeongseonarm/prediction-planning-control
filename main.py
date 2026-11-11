@@ -73,15 +73,9 @@ def main(argv=None):
         result = run_simulation(cfg, world, predictor, keep_tracks=visualize)
 
     if result.runtime_diagnostics:
-        print("Runtime worker diagnostics:")
-        for name, values in result.runtime_diagnostics.items():
-            print(
-                f"  {name}: calls={values['calls']}, "
-                f"deadline_misses={values['deadline_misses']}, "
-                f"discarded={values['discarded_results']}, "
-                f"errors={values['errors']}, "
-                f"max_compute_ms={values['max_compute_ms']:.1f}"
-            )
+        from simulation.async_runner import format_diagnostics
+
+        print("\n".join(format_diagnostics(result.runtime_diagnostics)))
 
     if visualize:
         from simulation.visualization import animate

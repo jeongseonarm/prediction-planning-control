@@ -36,3 +36,15 @@ _unused/
 /가상환경 활성화.txt
 /시행착오.txt
 
+
+# inD files under other locations (terms prohibit redistribution)
+*_background.png
+*_tracks*.csv
+*_recordingMeta.csv
+
+# Local scratch
+*.pkl
+*.webm
+.ipynb_checkpoints/
+Thumbs.db
+run_stats.py
